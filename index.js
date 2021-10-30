@@ -51,10 +51,8 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: "keyboard cat",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { maxAge: 60000 },
+    name: "lotteryquickpickssilvestri",
+    keys: ["xyzzy"],
   })
 );
 // CORS Headers => Required for cross-origin/ cross-server communication
