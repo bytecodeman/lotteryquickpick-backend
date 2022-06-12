@@ -309,28 +309,33 @@ app.post("/login", function (req, res) {
 
 //*************************************************************
 
-app.post("/send", function (req, res) {
-  let status;
+app.post("/send", async function (req, res) {
+  let statusCode;
+  let statusInfo;
   try {
     const data = req.body;
-    sendEmail({
+
+    await mailer.sendEmail({
       from: process.env.EMAIL,
       to: data.email, // list of receivers
       subject: `Here are your Lucky ${data.quickPicks.longName} Quick Picks`,
       text: convertToText(data.quickPicks), // plain text body
       html: convertToHTML(data.quickPicks), // html body
     });
+
     storeInDatabase("Send Email", data, req);
-    status = 200;
-    data = {
+
+    statusCode = 200;
+    statusInfo = {
       message: "Message Sent",
     };
   } catch (error) {
-    status = 422;
-    data = {
+    statusCode = 422;
+    statusInfo = {
       message: "ERROR sending message",
       error,
     };
   }
-  res.status(status).json(data);
+
+  res.status(statusCode).json(statusInfo);
 });
