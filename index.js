@@ -4,11 +4,11 @@ const compression = require("compression");
 const helmet = require("helmet");
 const path = require("path");
 const fetch = require("node-fetch");
-const randomLibrary = require("./randomLibrary");
 require("dotenv").config();
+const randomLibrary = require("./randomLibrary");
 const mongo = require("./mongo");
-const nodemailer = require("nodemailer");
 const { convertToHTML, convertToText } = require("./quickPicksToEmail");
+const mailer = require("./oauth2mailer");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -312,8 +312,15 @@ app.post("/login", function (req, res) {
 app.post("/send", function (req, res) {
   let status;
   try {
-    main(req.body);
-    storeInDatabase("Send Email", req.body, req);
+    const data = req.body;
+    sendEmail({
+      from: process.env.EMAIL,
+      to: data.email, // list of receivers
+      subject: `Here are your Lucky ${data.quickPicks.longName} Quick Picks`,
+      text: convertToText(data.quickPicks), // plain text body
+      html: convertToHTML(data.quickPicks), // html body
+    });
+    storeInDatabase("Send Email", data, req);
     status = 200;
     data = {
       message: "Message Sent",
@@ -327,29 +334,3 @@ app.post("/send", function (req, res) {
   }
   res.status(status).json(data);
 });
-
-async function main(data) {
-  // create reusable transporter object using the default SMTP transport
-
-  console.log(`${process.env.EMAIL_ACCOUNT}`, `${process.env.EMAIL_PASSWORD}`);
-  let transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: `${process.env.EMAIL_ACCOUNT}`,
-      pass: `${process.env.EMAIL_PASSWORD}`,
-    },
-  });
-
-  // send mail with defined transport object
-  let info = await transporter.sendMail({
-    from: "realbytecodeman@gmail.com", // sender address
-    to: data.email, // list of receivers
-    subject: `Here are your Lucky ${data.quickPicks.longName} Quick Picks`,
-    text: convertToText(data.quickPicks), // plain text body
-    html: convertToHTML(data.quickPicks), // html body
-  });
-
-  return info;
-}
